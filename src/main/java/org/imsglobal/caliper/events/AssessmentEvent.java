@@ -18,8 +18,9 @@
 
 package org.imsglobal.caliper.events;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import org.imsglobal.caliper.actions.Action;
 import org.imsglobal.caliper.entities.agent.Person;
 import org.imsglobal.caliper.entities.resource.Assessment;
@@ -28,146 +29,130 @@ import org.imsglobal.caliper.validators.EventValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
-@SupportedActions({
-    Action.STARTED,
-    Action.PAUSED,
-    Action.RESTARTED,
-    Action.RESUMED,
-    Action.SUBMITTED
-})
+@SupportedActions({ Action.STARTED, Action.PAUSED, Action.RESTARTED, Action.RESUMED, Action.SUBMITTED })
 public class AssessmentEvent extends Event {
 
-    @JsonProperty("actor")
-    private final Person actor;
+	@JsonIgnore
+	private static final Logger log = LoggerFactory.getLogger(AssessmentEvent.class);
 
-    @JsonProperty("object")
-    private final Assessment object;
+	/**
+	 * Utilize builder to construct AssessmentEvent. Validate Assessment object copy rather than the Assessment builder.
+	 * This approach protects the class against parameter changes from another thread during the "window of
+	 * vulnerability" between the time the parameters are checked until when they are copied.
+	 *
+	 * @param builder
+	 */
+	protected AssessmentEvent(Builder<?> builder) {
+		super(builder);
 
-    @JsonProperty("generated")
-    private final Attempt generated;
+		EventValidator.checkType(this.getType(), EventType.ASSESSMENT);
+		EventValidator.checkAction(this.getAction(), AssessmentEvent.class);
 
-    @JsonIgnore
-    private static final Logger log = LoggerFactory.getLogger(AssessmentEvent.class);
+	}
 
-    /**
-     * Utilize builder to construct AssessmentEvent.  Validate Assessment object copy rather than the
-     * Assessment builder.  This approach protects the class against parameter changes from another
-     * thread during the "window of vulnerability" between the time the parameters are checked
-     * until when they are copied.
-     *
-     * @param builder
-     */
-    protected AssessmentEvent(Builder<?> builder) {
-        super(builder);
+	/**
+	 * Required.
+	 * 
+	 * @return the actor
+	 */
+	@Override
+	@Nonnull
+	public Person getActor() {
+		return (Person) super.getActor();
+	}
 
-        EventValidator.checkType(this.getType(), EventType.ASSESSMENT);
-        EventValidator.checkAction(this.getAction(), AssessmentEvent.class);
+	/**
+	 * Required.
+	 * 
+	 * @return the object
+	 */
+	@Override
+	@Nonnull
+	public Assessment getObject() {
+		return (Assessment) super.getObject();
+	}
 
-        this.actor = builder.actor;
-        this.object = builder.object;
-        this.generated = builder.generated;
-    }
+	/**
+	 * Get the generated Attempt.
+	 * 
+	 * @return the generated object
+	 */
+	@Override
+	@Nullable
+	public Attempt getGenerated() {
+		return (Attempt) super.getGenerated();
+	}
 
-    /**
-     * Required.
-     * @return the actor
-     */
-    @Override
-    @Nonnull
-    public Person getActor() {
-        return actor;
-    }
+	/**
+	 * Initialize default parameter values in the builder.
+	 * 
+	 * @param <T>
+	 *            builder
+	 */
+	public static abstract class Builder<T extends Builder<T>> extends Event.Builder<T> {
 
-    /**
-     * Required.
-     * @return the object
-     */
-    @Override
-    @Nonnull
-    public Assessment getObject() {
-        return object;
-    }
+		/*
+		 * Constructor
+		 */
+		public Builder() {
+			super.type(EventType.ASSESSMENT);
+		}
 
-    /**
-     * Get the generated Attempt.
-     * @return the generated object
-     */
-    @Override
-    @Nullable
-    public Attempt getGenerated() {
-        return generated;
-    }
+		/**
+		 * @param actor
+		 * @return builder.
+		 */
+		public T actor(Person actor) {
+			super.actor(actor);
+			return self();
+		}
 
-    /**
-     * Initialize default parameter values in the builder.
-     * @param <T> builder
-     */
-    public static abstract class Builder<T extends Builder<T>> extends Event.Builder<T>  {
-        private Person actor;
-        private Assessment object;
-        private Attempt generated;
+		/**
+		 * @param object
+		 * @return builder.
+		 */
+		public T object(Assessment object) {
+			super.object(object);
+			return self();
+		}
 
-        /*
-         * Constructor
-         */
-        public Builder() {
-            super.type(EventType.ASSESSMENT);
-        }
+		/**
+		 * @param generated
+		 * @return builder.
+		 */
+		public T generated(Attempt generated) {
+			super.generated(generated);
+			return self();
+		}
 
-        /**
-         * @param actor
-         * @return builder.
-         */
-        public T actor(Person actor) {
-            this.actor = actor;
-            return self();
-        }
+		/**
+		 * Client invokes build method in order to create an immutable profile object.
+		 * 
+		 * @return a new AssessmentEvent instance.
+		 */
+		public AssessmentEvent build() {
+			return new AssessmentEvent(this);
+		}
+	}
 
-        /**
-         * @param object
-         * @return builder.
-         */
-        public T object(Assessment object) {
-            this.object = object;
-            return self();
-        }
+	/**
+	 * Self-reference that permits sub-classing of builder.
+	 */
+	private static class Builder2 extends Builder<Builder2> {
+		@Override
+		protected Builder2 self() {
+			return this;
+		}
+	}
 
-        /**
-         * @param generated
-         * @return builder.
-         */
-        public T generated(Attempt generated) {
-            this.generated = generated;
-            return self();
-        }
-
-        /**
-         * Client invokes build method in order to create an immutable profile object.
-         * @return a new AssessmentEvent instance.
-         */
-        public AssessmentEvent build() {
-            return new AssessmentEvent(this);
-        }
-    }
-
-    /**
-     * Self-reference that permits sub-classing of builder.
-     */
-    private static class Builder2 extends Builder<Builder2> {
-        @Override
-        protected Builder2 self() {
-            return this;
-        }
-    }
-
-    /**
-     * Static factory method.
-     * @return a new instance of the builder.
-     */
-    public static Builder<?> builder() {
-        return new Builder2();
-    }
+	/**
+	 * Static factory method.
+	 * 
+	 * @return a new instance of the builder.
+	 */
+	public static Builder<?> builder() {
+		return new Builder2();
+	}
 }

@@ -18,8 +18,8 @@
 
 package org.imsglobal.caliper.events;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import javax.annotation.Nonnull;
+
 import org.imsglobal.caliper.actions.Action;
 import org.imsglobal.caliper.entities.agent.Person;
 import org.imsglobal.caliper.entities.resource.CaliperDigitalResource;
@@ -27,115 +27,110 @@ import org.imsglobal.caliper.validators.EventValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @SupportedActions({ Action.VIEWED })
 public class ViewEvent extends Event {
 
-    @JsonProperty("actor")
-    private final Person actor;
+	@JsonIgnore
+	private static final Logger log = LoggerFactory.getLogger(ViewEvent.class);
 
-    @JsonProperty("object")
-    private final CaliperDigitalResource object;
+	/**
+	 * Utilize builder to construct ViewEvent. Validate View object copy rather than the View builder. This approach
+	 * protects the class against parameter changes from another thread during the "window of vulnerability" between the
+	 * time the parameters are checked until when they are copied.
+	 *
+	 * @param builder
+	 */
+	protected ViewEvent(Builder<?> builder) {
+		super(builder);
 
-    @JsonIgnore
-    private static final Logger log = LoggerFactory.getLogger(ViewEvent.class);
+		EventValidator.checkType(this.getType(), EventType.VIEW);
+		EventValidator.checkAction(this.getAction(), ViewEvent.class);
 
-    /**
-     * Utilize builder to construct ViewEvent.  Validate View object copy rather than the
-     * View builder.  This approach protects the class against parameter changes from another
-     * thread during the "window of vulnerability" between the time the parameters are checked
-     * until when they are copied.
-     *
-     * @param builder
-     */
-    protected ViewEvent(Builder<?> builder) {
-        super(builder);
+	}
 
-        EventValidator.checkType(this.getType(), EventType.VIEW);
-        EventValidator.checkAction(this.getAction(), ViewEvent.class);
+	/**
+	 * Required.
+	 * 
+	 * @return the actor
+	 */
+	@Override
+	@Nonnull
+	public Person getActor() {
+		return (Person) super.getActor();
+	}
 
-        this.actor = builder.actor;
-        this.object = builder.object;
-    }
+	/**
+	 * Required.
+	 * 
+	 * @return the object
+	 */
+	@Override
+	@Nonnull
+	public CaliperDigitalResource getObject() {
+		return (CaliperDigitalResource) super.getObject();
+	}
 
-    /**
-     * Required.
-     * @return the actor
-     */
-    @Override
-    @Nonnull
-    public Person getActor() {
-        return actor;
-    }
+	/**
+	 * Initialize default parameter values in the builder.
+	 * 
+	 * @param <T>
+	 *            builder
+	 */
+	public static abstract class Builder<T extends Builder<T>> extends Event.Builder<T> {
 
-    /**
-     * Required.
-     * @return the object
-     */
-    @Override
-    @Nonnull
-    public CaliperDigitalResource getObject() {
-        return object;
-    }
+		/*
+		 * Constructor
+		 */
+		public Builder() {
+			super.type(EventType.VIEW);
+		}
 
-    /**
-     * Initialize default parameter values in the builder.
-     * @param <T> builder
-     */
-    public static abstract class Builder<T extends Builder<T>> extends Event.Builder<T>  {
-        private Person actor;
-        private CaliperDigitalResource object;
+		/**
+		 * @param actor
+		 * @return builder.
+		 */
+		public T actor(Person actor) {
+			super.actor(actor);
+			return self();
+		}
 
-        /*
-         * Constructor
-         */
-        public Builder() {
-            super.type(EventType.VIEW);
-        }
+		/**
+		 * @param object
+		 * @return builder.
+		 */
+		public T object(CaliperDigitalResource object) {
+			super.object(object);
+			return self();
+		}
 
-        /**
-         * @param actor
-         * @return builder.
-         */
-        public T actor(Person actor) {
-            this.actor = actor;
-            return self();
-        }
+		/**
+		 * Client invokes build method in order to create an immutable profile object.
+		 * 
+		 * @return a new ViewEvent instance.
+		 */
+		public ViewEvent build() {
+			return new ViewEvent(this);
+		}
+	}
 
-        /**
-         * @param object
-         * @return builder.
-         */
-        public T object(CaliperDigitalResource object) {
-            this.object = object;
-            return self();
-        }
+	/**
+	 * Self-reference that permits sub-classing of builder.
+	 */
+	private static class Builder2 extends Builder<Builder2> {
+		@Override
+		protected Builder2 self() {
+			return this;
+		}
+	}
 
-        /**
-         * Client invokes build method in order to create an immutable profile object.
-         * @return a new ViewEvent instance.
-         */
-        public ViewEvent build() {
-            return new ViewEvent(this);
-        }
-    }
-
-    /**
-     * Self-reference that permits sub-classing of builder.
-     */
-    private static class Builder2 extends Builder<Builder2> {
-        @Override
-        protected Builder2 self() {
-            return this;
-        }
-    }
-
-    /**
-     * Static factory method.
-     * @return a new instance of the builder.
-     */
-    public static Builder<?> builder() {
-        return new Builder2();
-    }
+	/**
+	 * Static factory method.
+	 * 
+	 * @return a new instance of the builder.
+	 */
+	public static Builder<?> builder() {
+		return new Builder2();
+	}
 }

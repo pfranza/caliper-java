@@ -18,8 +18,9 @@
 
 package org.imsglobal.caliper.events;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import org.imsglobal.caliper.actions.Action;
 import org.imsglobal.caliper.entities.agent.Person;
 import org.imsglobal.caliper.entities.annotation.CaliperAnnotation;
@@ -28,145 +29,129 @@ import org.imsglobal.caliper.validators.EventValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
-@SupportedActions({
-    Action.BOOKMARKED,
-    Action.HIGHLIGHTED,
-    Action.SHARED,
-    Action.TAGGED
-})
+@SupportedActions({ Action.BOOKMARKED, Action.HIGHLIGHTED, Action.SHARED, Action.TAGGED })
 public class AnnotationEvent extends Event {
 
-    @JsonProperty("actor")
-    private final Person actor;
+	@JsonIgnore
+	private static final Logger log = LoggerFactory.getLogger(AnnotationEvent.class);
 
-    @JsonProperty("object")
-    private final CaliperDigitalResource object;
+	/**
+	 * Utilize builder to construct AnnotationEvent. Validate Annotation object copy rather than the Annotation builder.
+	 * This approach protects the class against parameter changes from another thread during the "window of
+	 * vulnerability" between the time the parameters are checked until when they are copied.
+	 *
+	 * @param builder
+	 */
+	protected AnnotationEvent(Builder<?> builder) {
+		super(builder);
 
-    @JsonProperty("generated")
-    private final CaliperAnnotation generated;
+		EventValidator.checkType(this.getType(), EventType.ANNOTATION);
+		EventValidator.checkAction(this.getAction(), AnnotationEvent.class);
+	}
 
-    @JsonIgnore
-    private static final Logger log = LoggerFactory.getLogger(AnnotationEvent.class);
+	/**
+	 * Required.
+	 * 
+	 * @return the actor
+	 */
+	@Override
+	@Nonnull
+	public Person getActor() {
+		return (Person) super.getActor();
+	}
 
-    /**
-     * Utilize builder to construct AnnotationEvent.  Validate Annotation object copy rather than the
-     * Annotation builder.  This approach protects the class against parameter changes from another
-     * thread during the "window of vulnerability" between the time the parameters are checked
-     * until when they are copied.
-     *
-     * @param builder
-     */
-    protected AnnotationEvent(Builder<?> builder) {
-        super(builder);
+	/**
+	 * Required.
+	 * 
+	 * @return the object
+	 */
+	@Override
+	@Nonnull
+	public CaliperDigitalResource getObject() {
+		return (CaliperDigitalResource) super.getObject();
+	}
 
-        EventValidator.checkType(this.getType(), EventType.ANNOTATION);
-        EventValidator.checkAction(this.getAction(), AnnotationEvent.class);
+	/**
+	 * Get the generated Annotation.
+	 * 
+	 * @return the generated object
+	 */
+	@Override
+	@Nullable
+	public CaliperAnnotation getGenerated() {
+		return (CaliperAnnotation) super.getGenerated();
+	}
 
-        this.actor = builder.actor;
-        this.object = builder.object;
-        this.generated = builder.generated;
-    }
+	/**
+	 * Initialize default parameter values in the builder.
+	 * 
+	 * @param <T>
+	 *            builder
+	 */
+	public static abstract class Builder<T extends Builder<T>> extends Event.Builder<T> {
 
-    /**
-     * Required.
-     * @return the actor
-     */
-    @Override
-    @Nonnull
-    public Person getActor() {
-        return actor;
-    }
+		/*
+		 * Constructor
+		 */
+		public Builder() {
+			super.type(EventType.ANNOTATION);
+		}
 
-    /**
-     * Required.
-     * @return the object
-     */
-    @Override
-    @Nonnull
-    public CaliperDigitalResource getObject() {
-        return object;
-    }
+		/**
+		 * @param actor
+		 * @return builder.
+		 */
+		public T actor(Person actor) {
+			super.actor(actor);
+			return self();
+		}
 
-    /**
-     * Get the generated Annotation.
-     * @return the generated object
-     */
-    @Override
-    @Nullable
-    public CaliperAnnotation getGenerated() {
-        return generated;
-    }
+		/**
+		 * @param object
+		 * @return builder.
+		 */
+		public T object(CaliperDigitalResource object) {
+			super.object(object);
+			return self();
+		}
 
-    /**
-     * Initialize default parameter values in the builder.
-     * @param <T> builder
-     */
-    public static abstract class Builder<T extends Builder<T>> extends Event.Builder<T>  {
-        private Person actor;
-        private CaliperDigitalResource object;
-        private CaliperAnnotation generated;
+		/**
+		 * @param generated
+		 * @return builder.
+		 */
+		public T generated(CaliperAnnotation generated) {
+			super.generated(generated);
+			return self();
+		}
 
-        /*
-         * Constructor
-         */
-        public Builder() {
-            super.type(EventType.ANNOTATION);
-        }
+		/**
+		 * Client invokes build method in order to create an immutable profile object.
+		 * 
+		 * @return a new AnnotationEvent instance.
+		 */
+		public AnnotationEvent build() {
+			return new AnnotationEvent(this);
+		}
+	}
 
-        /**
-         * @param actor
-         * @return builder.
-         */
-        public T actor(Person actor) {
-            this.actor = actor;
-            return self();
-        }
+	/**
+	 * Self-reference that permits sub-classing of builder.
+	 */
+	private static class Builder2 extends Builder<Builder2> {
+		@Override
+		protected Builder2 self() {
+			return this;
+		}
+	}
 
-        /**
-         * @param object
-         * @return builder.
-         */
-        public T object(CaliperDigitalResource object) {
-            this.object = object;
-            return self();
-        }
-
-        /**
-         * @param generated
-         * @return builder.
-         */
-        public T generated(CaliperAnnotation generated) {
-            this.generated = generated;
-            return self();
-        }
-
-        /**
-         * Client invokes build method in order to create an immutable profile object.
-         * @return a new AnnotationEvent instance.
-         */
-        public AnnotationEvent build() {
-            return new AnnotationEvent(this);
-        }
-    }
-
-    /**
-     * Self-reference that permits sub-classing of builder.
-     */
-    private static class Builder2 extends Builder<Builder2> {
-        @Override
-        protected Builder2 self() {
-            return this;
-        }
-    }
-
-    /**
-     * Static factory method.
-     * @return a new instance of the builder.
-     */
-    public static Builder<?> builder() {
-        return new Builder2();
-    }
+	/**
+	 * Static factory method.
+	 * 
+	 * @return a new instance of the builder.
+	 */
+	public static Builder<?> builder() {
+		return new Builder2();
+	}
 }
