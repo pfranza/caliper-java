@@ -18,98 +18,99 @@
 
 package org.imsglobal.caliper.events;
 
-import javax.annotation.Nonnull;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.imsglobal.caliper.actions.Action;
 import org.imsglobal.caliper.entities.agent.Person;
 import org.imsglobal.caliper.validators.EventValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import javax.annotation.Nonnull;
 
 @SupportedActions({ Action.NAVIGATED_TO })
 public class NavigationEvent extends Event {
 
-	@JsonIgnore
-	private static final Logger log = LoggerFactory.getLogger(NavigationEvent.class);
+    @JsonProperty("actor")
+    private final Person actor;
 
-	/**
-	 * Utilize builder to construct NavigationEvent. Validate Navigation object copy rather than the Navigation builder.
-	 * This approach protects the class against parameter changes from another thread during the "window of
-	 * vulnerability" between the time the parameters are checked until when they are copied.
-	 *
-	 * @param builder
-	 */
-	protected NavigationEvent(Builder<?> builder) {
-		super(builder);
+    @JsonIgnore
+    private static final Logger log = LoggerFactory.getLogger(NavigationEvent.class);
 
-		EventValidator.checkType(this.getType(), EventType.NAVIGATION);
-		EventValidator.checkAction(this.getAction(), NavigationEvent.class);
+    /**
+     * Utilize builder to construct NavigationEvent.  Validate Navigation object copy rather than the
+     * Navigation builder.  This approach protects the class against parameter changes from another
+     * thread during the "window of vulnerability" between the time the parameters are checked
+     * until when they are copied.
+     *
+     * @param builder
+     */
+    protected NavigationEvent(Builder<?> builder) {
+        super(builder);
 
-	}
+        EventValidator.checkType(this.getType(), EventType.NAVIGATION);
+        EventValidator.checkAction(this.getAction(), NavigationEvent.class);
 
-	/**
-	 * Required.
-	 * 
-	 * @return the actor
-	 */
-	@Override
-	@Nonnull
-	public Person getActor() {
-		return (Person) super.getActor();
-	}
+        this.actor = builder.actor;
+    }
 
-	/**
-	 * Initialize default parameter values in the builder.
-	 * 
-	 * @param <T>
-	 *            builder
-	 */
-	public static abstract class Builder<T extends Builder<T>> extends Event.Builder<T> {
+    /**
+     * Required.
+     * @return the actor
+     */
+    @Override
+    @Nonnull
+    public Person getActor() {
+        return actor;
+    }
 
-		/*
-		 * Constructor
-		 */
-		public Builder() {
-			super.type(EventType.NAVIGATION);
-		}
+    /**
+     * Initialize default parameter values in the builder.
+     * @param <T> builder
+     */
+    public static abstract class Builder<T extends Builder<T>> extends Event.Builder<T>  {
+        private Person actor;
 
-		/**
-		 * @param actor
-		 * @return builder.
-		 */
-		public T actor(Person actor) {
-			super.actor(actor);
-			return self();
-		}
+        /*
+         * Constructor
+         */
+        public Builder() {
+            super.type(EventType.NAVIGATION);
+        }
 
-		/**
-		 * Client invokes build method in order to create an immutable profile object.
-		 * 
-		 * @return a new NavigationEvent instance.
-		 */
-		public NavigationEvent build() {
-			return new NavigationEvent(this);
-		}
-	}
+        /**
+         * @param actor
+         * @return builder.
+         */
+        public T actor(Person actor) {
+            this.actor = actor;
+            return self();
+        }
 
-	/**
-	 * Self-reference that permits sub-classing of builder.
-	 */
-	private static class Builder2 extends Builder<Builder2> {
-		@Override
-		protected Builder2 self() {
-			return this;
-		}
-	}
+        /**
+         * Client invokes build method in order to create an immutable profile object.
+         * @return a new NavigationEvent instance.
+         */
+        public NavigationEvent build() {
+            return new NavigationEvent(this);
+        }
+    }
 
-	/**
-	 * Static factory method.
-	 * 
-	 * @return a new instance of the builder.
-	 */
-	public static Builder<?> builder() {
-		return new Builder2();
-	}
+    /**
+     * Self-reference that permits sub-classing of builder.
+     */
+    private static class Builder2 extends Builder<Builder2> {
+        @Override
+        protected Builder2 self() {
+            return this;
+        }
+    }
+
+    /**
+     * Static factory method.
+     * @return a new instance of the builder.
+     */
+    public static Builder<?> builder() {
+        return new Builder2();
+    }
 }
