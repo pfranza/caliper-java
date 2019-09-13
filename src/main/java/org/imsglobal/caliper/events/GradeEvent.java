@@ -68,7 +68,7 @@ public class GradeEvent extends AbstractEvent {
     @Override
     @Nullable
     public Score getGenerated() {
-        return (Score) super.getObject();
+        return (Score) super.getGenerated();
     }
 
     /**
